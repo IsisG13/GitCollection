@@ -9,17 +9,42 @@ interface RepositoryParams {
   repository: string;
 }
 
+interface GithubRepository {
+  full_name: string;
+  description: string;
+  forks_count: number;
+  open_issues_count: number;
+  stargazers_count: number;
+  owner: {
+    login: string;
+    avatar_url: string;
+  };
+}
+
+interface GithubIssue {
+  id: number;
+  title: string;
+  html_url: string;
+  user: {
+    login: string;
+  };
+}
+
 export const Repo: React.FC = () => {
+  const [repository, setRepository] = React.useState<GithubRepository | null>(
+    null,
+  );
+  const [issues, setIssues] = React.useState<GithubIssue[]>([]);
   const { params } = useRouteMatch<RepositoryParams>();
 
   React.useEffect(() => {
     api
       .get(`repos/${params.repository}`)
-      .then(response => console.log(response.data));
+      .then(response => setRepository(response.data));
 
     api
       .get(`repos/${params.repository}/issues`)
-      .then(response => console.log(response.data));
+      .then(response => setIssues(response.data));
   }, [params.repository]);
 
   return (
@@ -31,38 +56,50 @@ export const Repo: React.FC = () => {
         </Link>
       </Header>
 
-      <RepoInfo>
-        <header>
-          <img src="" alt="Marcelly Isis" />
-          <div>
-            <strong>IsisG13/GitCollection</strong>
-            <p>This project was bootstrapped with </p>
-          </div>
-        </header>
-        <ul>
-          <li>
-            <strong>1938</strong>
-            <span>Stars</span>
-          </li>
-          <li>
-            <strong>406</strong>
-            <span>Forks</span>
-          </li>
-          <li>
-            <strong>28</strong>
-            <span>Issues abertas</span>
-          </li>
-        </ul>
-      </RepoInfo>
+      {repository && (
+        <RepoInfo>
+          <header>
+            <img
+              src={repository.owner.avatar_url}
+              alt={repository.owner.login}
+            />
+            <div>
+              <strong>{repository.full_name}</strong>
+              <p>{repository.description}</p>
+            </div>
+          </header>
+          <ul>
+            <li>
+              <strong>{repository.stargazers_count}</strong>
+              <span>Stars</span>
+            </li>
+            <li>
+              <strong>{repository.forks_count}</strong>
+              <span>Forks</span>
+            </li>
+            <li>
+              <strong>{repository.open_issues_count}</strong>
+              <span>Issues abertas</span>
+            </li>
+          </ul>
+        </RepoInfo>
+      )}
 
       <Issues>
-        <Link to="/">
-          <div>
-            <strong>ruifoefe forjefe fjeofe</strong>
-            <p>k. r,je lferfjlekwhdewjwkdh kefed</p>
-          </div>
-          <FiChevronRight size={20} />
-        </Link>
+        {issues.map(issue => (
+          <a
+            href={issue.html_url}
+            key={issue.id}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <div>
+              <strong>{issue.title}</strong>
+              <p>{issue.user.login}</p>
+            </div>
+            <FiChevronRight size={20} />
+          </a>
+        ))}
       </Issues>
     </>
   );
